@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>LET'S MAKE UP — ดีกันนะ 💗</title>
+    
+    <!-- Open Graph Meta Tags สำหรับแชร์ลิงก์ใน LINE / IG ให้ขึ้นการ์ดน่ารัก ๆ -->
+    <meta property="og:title" content="มีอะไรจะให้ดูด้วยแหละ 💗">
+    <meta property="og:description" content="ลองกดเข้ามาดูหน่อยนะ... 🥺💕">
+    <meta property="og:type" content="website">
+    
+    <!-- Google Fonts: JetBrains Mono & Kanit สำหรับตัวอักษร Monospace และภาษาไทยที่คมชัดน่ารัก -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Kanit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Three.js & Tone.js CDNs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+
+    <style>
+        /* ==========================================================================
+           BASE & ROMANTIC PASTEL THEME VARIABLES
+           ========================================================================== */
+        :root {
+            --bg-deep: #0f0718;
+            --bg-purple: #1e0d2e;
+            --pink-primary: #ff5e9c;
+            --pink-baby: #ffb3d1;
+            --purple-pastel: #c77dff;
+            --glow-pink: 0 0 15px rgba(255, 94, 156, 0.85), 0 0 35px rgba(199, 125, 255, 0.55);
+            --font-main: 'Kanit', sans-serif;
+            --font-mono: 'JetBrains Mono', 'Kanit', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: radial-gradient(circle at 50% 45%, var(--bg-purple) 0%, var(--bg-deep) 85%);
+            font-family: var(--font-main);
+            color: #fff;
+        }
+
+        /* ==========================================================================
+           3D WEBGL CANVAS CONTAINER
+           ========================================================================== */
+        #canvas-container {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            touch-action: none;
+        }
+
+        /* ==========================================================================
+           SOUND TOGGLE & REPLAY BUTTONS
+           ========================================================================== */
+        #sound-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 50;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 179, 209, 0.4);
+            color: var(--pink-baby);
+            border-radius: 999px;
+            padding: 10px 16px;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        #sound-btn:hover {
+            background: rgba(255, 94, 156, 0.25);
+            transform: scale(1.05);
+            box-shadow: var(--glow-pink);
+        }
+
+        #replay-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 50;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 179, 209, 0.4);
+            color: var(--pink-baby);
+            border-radius: 999px;
+            padding: 10px 16px;
+            font-family: var(--font-main);
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.4s ease;
+        }
+
+        #replay-btn.visible {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        #replay-btn:hover {
+            background: rgba(255, 94, 156, 0.25);
+            transform: scale(1.05);
+            box-shadow: var(--glow-pink);
+        }
+
+        /* ==========================================================================
+           UI OVERLAY & SCENES ARCHITECTURE
+           ========================================================================== */
+        #ui-layer {
+            position: fixed;
+            inset: 0;
+            z-index: 10;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .scene {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            opacity: 0;
+            visibility: hidden;
+            transform: scale(0.95);
+            transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+                        transform 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+                        visibility 0.8s;
+        }
+
+        .scene.active {
+            opacity: 1;
+            visibility: visible;
+            transform: scale(1);
+        }
+
+        .scene.zoom-out {
+            opacity: 0 !important;
+            transform: scale(1.8) !important;
+            pointer-events: none !important;
+        }
+
+        /* ==========================================================================
+           SCENE 01 — START SCREEN
+           ========================================================================== */
+        .welcome-badge {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+            color: var(--purple-pastel);
+            background: rgba(199, 125, 255, 0.12);
+            border: 1px solid rgba(199, 125, 255, 0.3);
+            padding: 6px 16px;
+            border-radius: 999px;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+        }
+
+        .welcome-title {
+            font-size: clamp(1.7rem, 5vw, 2.8rem);
+            font-weight: 700;
+            color: #fff;
+            text-shadow: var(--glow-pink);
+            margin-bottom: 36px;
+            line-height: 1.4;
+        }
+
+        .start-btn-wrapper {
+            position: relative;
+            pointer-events: auto;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-cute-primary {
+            position: relative;
+            background: linear-gradient(135deg, #ff5e9c 0%, #ff85b3 50%, #c77dff 100%);
+            background-size: 200% 200%;
+            color: #fff;
+            border: 2px solid rgba(255, 255, 255, 0.65);
+            border-radius: 999px;
+            padding: 18px 42px;
+            font-family: var(--font-main);
+            font-size: clamp(1.15rem, 3.5vw, 1.45rem);
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(255, 94, 156, 0.55), inset 0 2px 6px rgba(255, 255, 255, 0.6);
+            animation: heartbeatPulse 1.8s infinite ease-in-out, gradientShift 4s infinite alternate;
+            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+        }
+
+        .btn-cute-primary:hover {
+            transform: scale(1.08) translateY(-3px);
+            box-shadow: 0 15px 40px rgba(255, 94, 156, 0.85), inset 0 2px 8px rgba(255, 255, 255, 0.8);
+        }
+
+        .btn-cute-primary:active {
+            transform: scale(0.95);
+        }
+
+        .orbit-heart {
+            position: absolute;
+            font-size: 1.3rem;
+            pointer-events: none;
+            animation: floatAround 3s infinite ease-in-out;
+            filter: drop-shadow(0 0 8px rgba(255, 94, 156, 0.8));
+        }
+
+        .orbit-heart:nth-child(1) { top: -22px; left: -18px; animation-delay: 0s; }
+        .orbit-heart:nth-child(2) { top: -26px; right: -15px; animation-delay: 0.7s; }
+        .orbit-heart:nth-child(3) { bottom: -22px; left: 10px; animation-delay: 1.4s; }
+        .orbit-heart:nth-child(4) { bottom: -20px; right: 5px; animation-delay: 2.1s; }
+
+        /* ==========================================================================
+           SCENE 02 — 3D ASCII HEART ("กาตูน")
+           ========================================================================== */
+        .scene-caption-bottom {
+            position: absolute;
+            bottom: 10%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 500px;
+            background: rgba(20, 9, 32, 0.65);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 179, 209, 0.35);
+            border-radius: 20px;
+            padding: 14px 24px;
+            font-size: clamp(1rem, 3.2vw, 1.25rem);
+            color: var(--pink-baby);
+            text-shadow: 0 0 10px rgba(255, 94, 156, 0.6);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+            animation: gentleFloat 3s infinite ease-in-out;
+        }
+
+        /* ==========================================================================
+           SCENE 03 — MESSAGE ATTACK ("ดีกันนะ")
+           ========================================================================== */
+        #attack-text {
+            font-size: clamp(2.8rem, 11vw, 6.5rem);
+            font-weight: 800;
+            color: #fff;
+            text-shadow: 0 0 20px #ff5e9c, 0 0 45px #ff5e9c, 0 0 80px #c77dff;
+            letter-spacing: 2px;
+            opacity: 0;
+            transform: scale(0.05) translateZ(-800px);
+            filter: blur(12px);
+            will-change: transform, opacity, filter;
+        }
+
+        #attack-text.fly-in {
+            animation: messageAttackAnim 2.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        /* ==========================================================================
+           SCENE 04 — THE QUESTION ("ดีกันไหม? 🥺💗")
+           ========================================================================== */
+        .question-card {
+            background: rgba(28, 12, 44, 0.72);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1.5px solid rgba(255, 179, 209, 0.45);
+            border-radius: 32px;
+            padding: clamp(28px, 6vw, 48px) clamp(24px, 6vw, 54px);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 35px rgba(255, 94, 156, 0.25);
+            max-width: 92vw;
+            width: 480px;
+            pointer-events: auto;
+        }
+
+        .question-title {
+            font-size: clamp(2rem, 6.5vw, 3.2rem);
+            font-weight: 800;
+            color: #fff;
+            text-shadow: var(--glow-pink);
+            margin-bottom: 32px;
+        }
+
+        .question-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            justify-content: center;
+        }
+
+        .btn-agree {
+            flex: 1 1 160px;
+            background: linear-gradient(135deg, #ff5e9c, #ff85b3);
+            color: #fff;
+            border: 2px solid rgba(255, 255, 255, 0.6);
+            border-radius: 999px;
+            padding: 16px 28px;
+            font-family: var(--font-main);
+            font-size: 1.35rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 8px 22px rgba(255, 94, 156, 0.45);
+            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+        }
+
+        .btn-agree.alt {
+            background: linear-gradient(135deg, #c77dff, #ff75b5);
+            box-shadow: 0 8px 22px rgba(199, 125, 255, 0.45);
+        }
+
+        .btn-agree:hover {
+            transform: scale(1.08) translateY(-3px);
+            box-shadow: 0 12px 30px rgba(255, 94, 156, 0.8);
+        }
+
+        .btn-agree:active {
+            transform: scale(0.94);
+        }
+
+        /* ==========================================================================
+           SCENE 05 — FINAL LOVE HEART ("รักนะ")
+           ========================================================================== */
+        .final-bottom-box {
+            position: absolute;
+            bottom: 8%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 460px;
+            background: rgba(24, 10, 38, 0.72);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 179, 209, 0.45);
+            border-radius: 26px;
+            padding: 18px 24px;
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.5), 0 0 25px rgba(255, 94, 156, 0.25);
+        }
+
+        .final-main-msg {
+            font-size: clamp(1.25rem, 4vw, 1.65rem);
+            font-weight: 700;
+            color: #fff;
+            text-shadow: 0 0 12px rgba(255, 94, 156, 0.8);
+        }
+
+        /* ==========================================================================
+           2D HEART EXPLOSION & ADVANCED TAP SPARKLE PARTICLES
+           ========================================================================== */
+        .burst-heart {
+            position: fixed;
+            pointer-events: none;
+            z-index: 100;
+            font-size: 1.5rem;
+            will-change: transform, opacity;
+            animation: burstFly 1.1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .tap-love-pop {
+            position: fixed;
+            pointer-events: none;
+            z-index: 100;
+            font-family: var(--font-main);
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: #ffb3d1;
+            text-shadow: 0 0 15px #ff5e9c, 0 0 30px #c77dff;
+            white-space: nowrap;
+            will-change: transform, opacity;
+            animation: tapAdvancedPop 1.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        .tap-star-sparkle {
+            position: fixed;
+            pointer-events: none;
+            z-index: 99;
+            font-size: 1.1rem;
+            will-change: transform, opacity;
+            animation: starFlyOut 1s cubic-bezier(0.1, 1, 0.3, 1) forwards;
+        }
+
+        /* ==========================================================================
+           KEYFRAME ANIMATIONS
+           ========================================================================== */
+        @keyframes heartbeatPulse {
+            0%, 100% { transform: scale(1); }
+            15% { transform: scale(1.06); }
+            30% { transform: scale(0.98); }
+            45% { transform: scale(1.04); }
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 100% 50%; }
+        }
+
+        @keyframes floatAround {
+            0%, 100% { transform: translateY(0) rotate(-8deg) scale(1); }
+            50% { transform: translateY(-10px) rotate(12deg) scale(1.15); }
+        }
+
+        @keyframes gentleFloat {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(-6px); }
+        }
+
+        @keyframes messageAttackAnim {
+            0% {
+                opacity: 0;
+                transform: scale(0.05);
+                filter: blur(16px);
+            }
+            20% {
+                opacity: 1;
+                filter: blur(4px);
+            }
+            55% {
+                opacity: 1;
+                transform: scale(1.35);
+                filter: blur(0px);
+            }
+            75% {
+                opacity: 1;
+                transform: scale(1.0);
+                filter: blur(0px);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(0.65);
+                filter: blur(8px);
+            }
+        }
+
+        @keyframes burstFly {
+            0% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(0.4);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(1.5) rotate(var(--rot));
+            }
+        }
+
+        @keyframes tapAdvancedPop {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.4) rotate(-10deg);
+            }
+            25% {
+                opacity: 1;
+                transform: translate(-50%, -90%) scale(1.25) rotate(5deg);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(calc(-50% + var(--dx)), -210%) scale(0.85) rotate(-5deg);
+            }
+        }
+
+        @keyframes starFlyOut {
+            0% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(0.3) rotate(0deg);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(calc(-50% + var(--sx)), calc(-50% + var(--sy))) scale(1.4) rotate(180deg);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 3D WebGL Canvas Container -->
+    <div id="canvas-container"></div>
+
+    <!-- Replay Button (Shows in Final Scene) -->
+    <button id="replay-btn" aria-label="Replay Experience">
+        <span>🔄</span>
+        <span>เล่นอีกรอบ</span>
+    </button>
+
+    <!-- Sound Toggle Button -->
+    <button id="sound-btn" aria-label="Toggle Sound">
+        <span id="sound-icon">🔇</span>
+        <span id="sound-label">SOUND OFF</span>
+    </button>
+
+    <!-- Interactive UI Scenes Layer -->
+    <div id="ui-layer">
+
+        <!-- SCENE 01: START SCREEN -->
+        <section id="scene-1" class="scene active">
+            <div class="welcome-badge">ASCII LOVE EXPERIENCE</div>
+            <h1 class="welcome-title">มีอะไรจะให้ดูด้วยแหละ 💗</h1>
+            <div class="start-btn-wrapper">
+                <span class="orbit-heart">💗</span>
+                <span class="orbit-heart">💕</span>
+                <span class="orbit-heart">✨</span>
+                <span class="orbit-heart">💖</span>
+                <button id="start-btn" class="btn-cute-primary">กดเพื่อเริ่มเล่น 💕</button>
+            </div>
+        </section>
+
+        <!-- SCENE 02: 3D ASCII HEART ("กาตูน") -->
+        <section id="scene-2" class="scene">
+            <div class="scene-caption-bottom">
+                เธอรู้ไหมว่ามีใครคิดถึงเธออยู่...
+            </div>
+        </section>
+
+        <!-- SCENE 03: MESSAGE ATTACK ("ดีกันนะ") -->
+        <section id="scene-3" class="scene">
+            <div id="attack-text">ดีกันนะ</div>
+        </section>
+
+        <!-- SCENE 04: THE QUESTION ("ดีกันไหม? 🥺💗") -->
+        <section id="scene-4" class="scene">
+            <div class="question-card">
+                <h2 class="question-title">ดีกันไหม? 🥺💗</h2>
+                <div class="question-buttons">
+                    <button class="btn-agree" data-choice="1">ตกลง 💗</button>
+                    <button class="btn-agree alt" data-choice="2">ตกลง 💕</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- SCENE 05: FINAL LOVE HEART ("รักนะ") -->
+        <section id="scene-5" class="scene">
+            <div class="final-bottom-box">
+                <p class="final-main-msg">ขอบคุณที่ยอมดีกันนะ 🥺💗</p>
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        /**
+         * ==========================================================================
+         * SOUND ENGINE (Tone.js Procedural Cute & Romantic Audio)
+         * ==========================================================================
+         */
+        class SoundManager {
+            constructor() {
+                this.isMuted = true;
+                this.isInitialized = false;
+                this.bgmLoop = null;
+                this.synth = null;
+                this.bgmSynth = null;
+                this.heartSynth = null;
+            }
+
+            async init() {
+                if (this.isInitialized) return;
+                try {
+                    await Tone.start();
+                    
+                    // Cute Bell/Pluck Synth for UI SFX
+                    this.synth = new Tone.PolySynth(Tone.Synth, {
+                        oscillator: { type: "triangle" },
+                        envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.6 }
+                    }).toDestination();
+                    this.synth.volume.value = -8;
+
+                    // Soft Heartbeat Bass Synth
+                    this.heartSynth = new Tone.MembraneSynth({
+                        pitchDecay: 0.08,
+                        octaves: 2,
+                        oscillator: { type: "sine" },
+                        envelope: { attack: 0.01, decay: 0.25, sustain: 0, release: 0.2 }
+                    }).toDestination();
+                    this.heartSynth.volume.value = -18;
+
+                    // Soft Romantic Music Box BGM Synth
+                    this.bgmSynth = new Tone.PolySynth(Tone.Synth, {
+                        oscillator: { type: "sine" },
+                        envelope: { attack: 0.08, decay: 0.4, sustain: 0.3, release: 1.2 }
+                    }).toDestination();
+                    this.bgmSynth.volume.value = -16;
+
+                    // Romantic Arpeggio Melody
+                    const notes = [
+                        "C5", "E5", "G5", "B5",
+                        "A5", "E5", "C5", "E5",
+                        "F5", "A5", "C6", "A5",
+                        "G5", "D5", "B4", "D5"
+                    ];
+                    let idx = 0;
+
+                    this.bgmLoop = new Tone.Loop((time) => {
+                        if (!this.isMuted) {
+                            this.bgmSynth.triggerAttackRelease(notes[idx % notes.length], "8n", time);
+                            idx++;
+                        }
+                    }, "4n");
+
+                    Tone.Transport.bpm.value = 96;
+                    Tone.Transport.start();
+                    this.bgmLoop.start(0);
+
+                    this.isInitialized = true;
+                    this.setMute(false);
+                } catch (e) {
+                    console.warn("Audio init deferred:", e);
+                }
+            }
+
+            setMute(mute) {
+                this.isMuted = mute;
+                const icon = document.getElementById('sound-icon');
+                const label = document.getElementById('sound-label');
+                if (this.isMuted) {
+                    icon.textContent = '🔇';
+                    label.textContent = 'SOUND OFF';
+                } else {
+                    icon.textContent = '🔊';
+                    label.textContent = 'SOUND ON';
+                }
+            }
+
+            async toggle() {
+                if (!this.isInitialized) {
+                    await this.init();
+                } else {
+                    this.setMute(!this.isMuted);
+                    if (!this.isMuted) this.playClick();
+                }
+            }
+
+            playClick() {
+                if (this.isMuted || !this.synth) return;
+                const now = Tone.now();
+                this.synth.triggerAttackRelease("E6", "16n", now);
+                this.synth.triggerAttackRelease("B6", "16n", now + 0.06);
+            }
+
+            playPop() {
+                if (this.isMuted || !this.synth) return;
+                const now = Tone.now();
+                this.synth.triggerAttackRelease("G5", "16n", now);
+                this.synth.triggerAttackRelease("C6", "16n", now + 0.05);
+                this.synth.triggerAttackRelease("E6", "8n", now + 0.1);
+            }
+
+            playWhoosh() {
+                if (this.isMuted || !this.synth) return;
+                const now = Tone.now();
+                ["C4", "E4", "G4", "C5", "E5", "G5", "C6"].forEach((note, i) => {
+                    this.synth.triggerAttackRelease(note, "32n", now + i * 0.04);
+                });
+            }
+
+            playSparkle() {
+                if (this.isMuted || !this.synth) return;
+                const now = Tone.now();
+                const chords = ["C6", "E6", "G6", "B6"];
+                chords.forEach((note, i) => {
+                    this.synth.triggerAttackRelease(note, "16n", now + i * 0.07);
+                });
+            }
+
+            playTapChime() {
+                if (this.isMuted || !this.synth) return;
+                const notes = ["E6", "G6", "A6", "B6", "C7"];
+                const pick = notes[Math.floor(Math.random() * notes.length)];
+                this.synth.triggerAttackRelease(pick, "16n", Tone.now());
+            }
+
+            playHeartbeat() {
+                if (this.isMuted || !this.heartSynth) return;
+                const now = Tone.now();
+                this.heartSynth.triggerAttackRelease("C2", "16n", now);
+                this.heartSynth.triggerAttackRelease("G1", "16n", now + 0.16);
+            }
+        }
+
+        /**
+         * ==========================================================================
+         * 3D ASCII ENGINE (Three.js Volumetric ASCII Heart & Particle System)
+         * ==========================================================================
+         */
+        class AsciiHeartEngine {
+            constructor(container) {
+                this.container = container;
+                this.scene = new THREE.Scene();
+                this.scene.fog = new THREE.FogExp2(0x0f0718, 0.022);
+
+                this.camera = new THREE.PerspectiveCamera(
+                    55,
+                    window.innerWidth / window.innerHeight,
+                    0.1,
+                    1000
+                );
+                this.updateCameraDistance();
+
+                this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                this.container.appendChild(this.renderer.domElement);
+
+                // Groups
+                this.starGroup = new THREE.Group();
+                this.asciiHeartGroup = new THREE.Group();
+                this.floatingHeartsGroup = new THREE.Group();
+                this.scene.add(this.starGroup);
+                this.scene.add(this.asciiHeartGroup);
+                this.scene.add(this.floatingHeartsGroup);
+
+                // Texture Cache for Crisp Glowing Words
+                this.wordTextures = {};
+
+                // State
+                this.currentMode = 'stars'; // 'stars' | 'cartoon' | 'attack' | 'love'
+                this.clock = new THREE.Clock();
+                this.targetRotationY = 0;
+                this.targetRotationX = 0;
+                this.isDragging = false;
+                this.prevPointer = { x: 0, y: 0 };
+                this.heartScaleTarget = 0;
+                this.heartScaleCurrent = 0;
+                this.lastBeatTrigger = 0;
+                this.onHeartbeat = null;
+
+                this.initStarfield();
+                this.initFloatingHeartParticles();
+                this.bindEvents();
+                this.animate();
+            }
+
+            updateCameraDistance() {
+                const aspect = window.innerWidth / window.innerHeight;
+                this.baseCameraZ = aspect < 0.75 ? 36 : 27;
+                this.camera.position.z = this.baseCameraZ;
+            }
+
+            /**
+             * Generate high-contrast glowing word texture on Canvas for 3D Sprites
+             */
+            getWordTexture(word, colorHex, glowHex) {
+                const key = `${word}_${colorHex}_${glowHex}`;
+                if (this.wordTextures[key]) return this.wordTextures[key];
+
+                const canvas = document.createElement('canvas');
+                canvas.width = 320;
+                canvas.height = 96;
+                const ctx = canvas.getContext('2d');
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.font = '800 36px "JetBrains Mono", "Kanit", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+
+                // Soft Outer Glow
+                ctx.shadowColor = glowHex;
+                ctx.shadowBlur = 14;
+                ctx.fillStyle = colorHex;
+                ctx.fillText(word, 160, 48);
+
+                // Crisp Inner Highlight for Easy Reading
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = '#ffffff';
+                ctx.globalAlpha = 0.75;
+                ctx.fillText(word, 160, 48);
+
+                const texture = new THREE.CanvasTexture(canvas);
+                texture.needsUpdate = true;
+                this.wordTextures[key] = texture;
+                return texture;
+            }
+
+            /**
+             * Background Twinkling Starfield
+             */
+            initStarfield() {
+                const starCount = window.innerWidth < 768 ? 450 : 800;
+                const geometry = new THREE.BufferGeometry();
+                const positions = new Float32Array(starCount * 3);
+                const colors = new Float32Array(starCount * 3);
+
+                const palette = [
+                    new THREE.Color('#ffffff'),
+                    new THREE.Color('#ffb3d1'),
+                    new THREE.Color('#c77dff'),
+                    new THREE.Color('#ff5e9c')
+                ];
+
+                for (let i = 0; i < starCount; i++) {
+                    positions[i * 3] = (Math.random() - 0.5) * 120;
+                    positions[i * 3 + 1] = (Math.random() - 0.5) * 120;
+                    positions[i * 3 + 2] = (Math.random() - 0.5) * 100 - 15;
+
+                    const c = palette[Math.floor(Math.random() * palette.length)];
+                    colors[i * 3] = c.r;
+                    colors[i * 3 + 1] = c.g;
+                    colors[i * 3 + 2] = c.b;
+                }
+
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+                const material = new THREE.PointsMaterial({
+                    size: 0.45,
+                    vertexColors: true,
+                    transparent: true,
+                    opacity: 0.85
+                });
+
+                this.stars = new THREE.Points(geometry, material);
+                this.starGroup.add(this.stars);
+            }
+
+            /**
+             * Ambient Floating Mini ASCII Hearts
+             */
+            initFloatingHeartParticles() {
+                const count = window.innerWidth < 768 ? 22 : 38;
+                const symbols = ['♥', '💗', '✦', '💕'];
+
+                for (let i = 0; i < count; i++) {
+                    const sym = symbols[i % symbols.length];
+                    const tex = this.getWordTexture(sym, '#ffb3d1', '#ff5e9c');
+                    const mat = new THREE.SpriteMaterial({
+                        map: tex,
+                        transparent: true,
+                        opacity: 0.65
+                    });
+                    const sprite = new THREE.Sprite(mat);
+                    sprite.position.set(
+                        (Math.random() - 0.5) * 32,
+                        (Math.random() - 0.5) * 28,
+                        (Math.random() - 0.5) * 20
+                    );
+                    const s = 0.8 + Math.random() * 0.7;
+                    sprite.scale.set(s * 2.2, s * 0.85, 1);
+                    sprite.userData = {
+                        speedY: 0.015 + Math.random() * 0.025,
+                        wobbleOffset: Math.random() * Math.PI * 2
+                    };
+                    this.floatingHeartsGroup.add(sprite);
+                }
+            }
+
+            /**
+             * Build 3D Volumetric Heart Surface using Parametric Equations & Dense Legible Words
+             */
+            buildAsciiHeart(wordText, primaryColor, secondaryColor) {
+                // Clear existing ASCII nodes
+                while (this.asciiHeartGroup.children.length > 0) {
+                    const child = this.asciiHeartGroup.children[0];
+                    this.asciiHeartGroup.remove(child);
+                }
+
+                const isMobile = window.innerWidth < 768;
+                const uSteps = isMobile ? 22 : 28;
+                const vSteps = isMobile ? 12 : 16;
+                const scaleFactor = 0.62;
+
+                const frontTex = this.getWordTexture(wordText, primaryColor, primaryColor);
+                const backTex = this.getWordTexture(wordText, secondaryColor, primaryColor);
+
+                for (let iv = 1; iv < vSteps; iv++) {
+                    const v = (iv / vSteps) * Math.PI;
+                    const sinV = Math.sin(v);
+                    const cosV = Math.cos(v);
+
+                    const ringSteps = Math.max(6, Math.round(uSteps * sinV));
+
+                    for (let iu = 0; iu < ringSteps; iu++) {
+                        const u = (iu / ringSteps) * Math.PI * 2;
+                        const sinU = Math.sin(u);
+
+                        const hx = 16 * Math.pow(sinU, 3) * sinV;
+                        const hy = (13 * Math.cos(u) - 5 * Math.cos(2 * u) - 2 * Math.cos(3 * u) - Math.cos(4 * u)) * sinV;
+                        const hz = 7.2 * cosV * Math.pow(sinV, 0.45);
+
+                        const isFront = hz >= 0;
+
+                        const mat = new THREE.SpriteMaterial({
+                            map: isFront ? frontTex : backTex,
+                            transparent: true,
+                            opacity: isFront ? 0.98 : 0.35,
+                            depthWrite: false
+                        });
+
+                        const sprite = new THREE.Sprite(mat);
+                        sprite.position.set(hx * scaleFactor, (hy + 2) * scaleFactor, hz * scaleFactor);
+                        
+                        const baseScale = isMobile ? 1.7 : 1.9;
+                        sprite.scale.set(baseScale * 2.2, baseScale * 0.68, 1);
+                        
+                        sprite.userData = {
+                            basePos: sprite.position.clone(),
+                            phase: (u + v) * 2
+                        };
+
+                        this.asciiHeartGroup.add(sprite);
+                    }
+                }
+
+                this.heartScaleCurrent = 0.01;
+                this.heartScaleTarget = 1;
+                this.asciiHeartGroup.rotation.set(0, -0.25, 0);
+                this.targetRotationY = 0;
+                this.targetRotationX = 0;
+            }
+
+            hideAsciiHeart() {
+                this.heartScaleTarget = 0;
+            }
+
+            /**
+             * Interactive Drag/Touch Rotation & Resize Handling
+             */
+            bindEvents() {
+                window.addEventListener('resize', () => {
+                    this.camera.aspect = window.innerWidth / window.innerHeight;
+                    this.camera.updateProjectionMatrix();
+                    this.updateCameraDistance();
+                    this.renderer.setSize(window.innerWidth, window.innerHeight);
+                });
+
+                const onPointerDown = (e) => {
+                    this.isDragging = true;
+                    const pt = e.touches ? e.touches[0] : e;
+                    this.prevPointer = { x: pt.clientX, y: pt.clientY };
+                };
+
+                const onPointerMove = (e) => {
+                    if (!this.isDragging) return;
+                    const pt = e.touches ? e.touches[0] : e;
+                    const deltaX = pt.clientX - this.prevPointer.x;
+                    const deltaY = pt.clientY - this.prevPointer.y;
+                    this.targetRotationY += deltaX * 0.008;
+                    this.targetRotationX = Math.max(-0.6, Math.min(0.6, this.targetRotationX + deltaY * 0.006));
+                    this.prevPointer = { x: pt.clientX, y: pt.clientY };
+                };
+
+                const onPointerUp = () => {
+                    this.isDragging = false;
+                };
+
+                this.container.addEventListener('mousedown', onPointerDown);
+                window.addEventListener('mousemove', onPointerMove);
+                window.addEventListener('mouseup', onPointerUp);
+
+                this.container.addEventListener('touchstart', onPointerDown, { passive: true });
+                window.addEventListener('touchmove', onPointerMove, { passive: true });
+                window.addEventListener('touchend', onPointerUp);
+            }
+
+            animate() {
+                requestAnimationFrame(() => this.animate());
+                const elapsed = this.clock.getElapsedTime();
+
+                // 1. Rotate Starfield Slowly
+                this.starGroup.rotation.y = elapsed * 0.03;
+                this.starGroup.rotation.x = Math.sin(elapsed * 0.05) * 0.08;
+
+                // 2. Float Ambient Heart Particles Upward
+                this.floatingHeartsGroup.children.forEach((sprite) => {
+                    sprite.position.y += sprite.userData.speedY;
+                    sprite.position.x += Math.sin(elapsed * 1.5 + sprite.userData.wobbleOffset) * 0.012;
+                    if (sprite.position.y > 16) {
+                        sprite.position.y = -16;
+                    }
+                });
+
+                // 3. Animate 3D ASCII Heart
+                this.heartScaleCurrent += (this.heartScaleTarget - this.heartScaleCurrent) * 0.08;
+                if (this.heartScaleCurrent > 0.01) {
+                    this.asciiHeartGroup.visible = true;
+
+                    if (!this.isDragging) {
+                        this.targetRotationY += 0.009;
+                    }
+                    this.asciiHeartGroup.rotation.y += (this.targetRotationY - this.asciiHeartGroup.rotation.y) * 0.1;
+                    this.asciiHeartGroup.rotation.x += (this.targetRotationX - this.asciiHeartGroup.rotation.x) * 0.1;
+
+                    const pulseWave = Math.pow(Math.sin(elapsed * 3.2), 4);
+                    if (pulseWave > 0.92 && elapsed - this.lastBeatTrigger > 0.85) {
+                        this.lastBeatTrigger = elapsed;
+                        if (this.onHeartbeat) this.onHeartbeat();
+                    }
+
+                    const beat = 1 + pulseWave * 0.06;
+                    const finalScale = this.heartScaleCurrent * beat;
+                    this.asciiHeartGroup.scale.set(finalScale, finalScale, finalScale);
+
+                    if (this.currentMode === 'love') {
+                        this.camera.position.z = this.baseCameraZ + Math.sin(elapsed * 1.2) * 1.8;
+                    } else {
+                        this.camera.position.z += (this.baseCameraZ - this.camera.position.z) * 0.05;
+                    }
+                } else {
+                    this.asciiHeartGroup.visible = false;
+                }
+
+                this.renderer.render(this.scene, this.camera);
+            }
+        }
+
+        /**
+         * ==========================================================================
+         * SCENE FLOW CONTROLLER & INTERACTIVE ORCHESTRATION
+         * ==========================================================================
+         */
+        window.onload = function () {
+            const sound = new SoundManager();
+            const engine = new AsciiHeartEngine(document.getElementById('canvas-container'));
+            engine.onHeartbeat = () => sound.playHeartbeat();
+
+            let isTransitioning = false;
+            let currentScene = 1;
+            let scene2Timer = null;
+            const replayBtn = document.getElementById('replay-btn');
+
+            function showScene(sceneNum) {
+                document.querySelectorAll('.scene').forEach(el => el.classList.remove('active'));
+                const target = document.getElementById(`scene-${sceneNum}`);
+                if (target) target.classList.add('active');
+                currentScene = sceneNum;
+
+                if (sceneNum === 5) {
+                    replayBtn.classList.add('visible');
+                } else {
+                    replayBtn.classList.remove('visible');
+                }
+            }
+
+            // Standard Heart Explosion Particle Effect
+            function spawnHeartExplosion(x, y, count = 22) {
+                const hearts = ['💗', '💕', '💖', '💘', '✨', '🌸'];
+                for (let i = 0; i < count; i++) {
+                    const el = document.createElement('div');
+                    el.className = 'burst-heart';
+                    el.textContent = hearts[Math.floor(Math.random() * hearts.length)];
+                    el.style.left = `${x}px`;
+                    el.style.top = `${y}px`;
+
+                    const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.4;
+                    const dist = 90 + Math.random() * 190;
+                    const tx = Math.cos(angle) * dist;
+                    const ty = Math.sin(angle) * dist;
+                    const rot = (Math.random() - 0.5) * 90;
+
+                    el.style.setProperty('--tx', `${tx}px`);
+                    el.style.setProperty('--ty', `${ty}px`);
+                    el.style.setProperty('--rot', `${rot}deg`);
+
+                    document.body.appendChild(el);
+                    setTimeout(() => el.remove(), 1150);
+                }
+            }
+
+            // Advanced Tap/Touch Interactive Effects for Scene 05
+            function spawnAdvancedTapEffect(x, y) {
+                const phrases = [
+                    "รักนะ 💖", 
+                    "พรีมรักกาตูนนะ 💗", 
+                    "ไอ้อ้วนของพี่ 💕", 
+                    "จุ๊บ ๆ 😘", 
+                    "รักที่สุดในโลก 💘",
+                    "💖 ✨"
+                ];
+
+                // 1. Floating Love Message Pop
+                const pop = document.createElement('div');
+                pop.className = 'tap-love-pop';
+                pop.textContent = phrases[Math.floor(Math.random() * phrases.length)];
+                pop.style.left = `${x}px`;
+                pop.style.top = `${y}px`;
+                pop.style.setProperty('--dx', `${(Math.random() - 0.5) * 80}px`);
+                document.body.appendChild(pop);
+                setTimeout(() => pop.remove(), 1350);
+
+                // 2. Radiant Star & Sparkle Shower
+                const sparkleSymbols = ['✨', '⭐', '💫', '✦', '💖', '🌸'];
+                const starCount = 8;
+                for (let i = 0; i < starCount; i++) {
+                    const star = document.createElement('div');
+                    star.className = 'tap-star-sparkle';
+                    star.textContent = sparkleSymbols[Math.floor(Math.random() * sparkleSymbols.length)];
+                    star.style.left = `${x}px`;
+                    star.style.top = `${y}px`;
+
+                    const angle = (Math.PI * 2 * i) / starCount + Math.random() * 0.5;
+                    const dist = 60 + Math.random() * 120;
+                    star.style.setProperty('--sx', `${Math.cos(angle) * dist}px`);
+                    star.style.setProperty('--sy', `${Math.sin(angle) * dist}px`);
+
+                    document.body.appendChild(star);
+                    setTimeout(() => star.remove(), 1050);
+                }
+            }
+
+            // Sound Toggle Button
+            document.getElementById('sound-btn').addEventListener('click', () => {
+                sound.toggle();
+            });
+
+            // Replay Button
+            replayBtn.addEventListener('click', () => {
+                if (isTransitioning) return;
+                sound.playClick();
+                if (scene2Timer) clearTimeout(scene2Timer);
+                engine.hideAsciiHeart();
+                engine.currentMode = 'stars';
+                const scene1 = document.getElementById('scene-1');
+                scene1.classList.remove('zoom-out');
+                showScene(1);
+            });
+
+            // Interactive Tap/Touch Listener in Final Scene 05
+            let tapStartPos = { x: 0, y: 0 };
+            const canvasEl = document.getElementById('canvas-container');
+            canvasEl.addEventListener('pointerdown', (e) => {
+                tapStartPos = { x: e.clientX, y: e.clientY };
+            });
+            canvasEl.addEventListener('pointerup', (e) => {
+                if (currentScene !== 5) return;
+                const moveDist = Math.hypot(e.clientX - tapStartPos.x, e.clientY - tapStartPos.y);
+                if (moveDist < 14) {
+                    sound.playTapChime();
+                    spawnAdvancedTapEffect(e.clientX, e.clientY);
+                    spawnHeartExplosion(e.clientX, e.clientY, 14);
+                }
+            });
+
+            // SCENE 01 -> SCENE 02
+            const startBtn = document.getElementById('start-btn');
+            startBtn.addEventListener('click', async () => {
+                if (isTransitioning) return;
+                isTransitioning = true;
+
+                await sound.init();
+                sound.playClick();
+
+                const rect = startBtn.getBoundingClientRect();
+                spawnHeartExplosion(rect.left + rect.width / 2, rect.top + rect.height / 2, 18);
+
+                const scene1 = document.getElementById('scene-1');
+                scene1.classList.add('zoom-out');
+
+                setTimeout(() => {
+                    showScene(2);
+                    engine.currentMode = 'cartoon';
+                    engine.buildAsciiHeart("กาตูน", "#ff5e9c", "#c77dff");
+                    sound.playPop();
+                    isTransitioning = false;
+
+                    if (scene2Timer) clearTimeout(scene2Timer);
+                    scene2Timer = setTimeout(() => {
+                        triggerScene03Attack();
+                    }, 6500);
+                }, 750);
+            });
+
+            // SCENE 03 -> SCENE 04
+            function triggerScene03Attack() {
+                engine.hideAsciiHeart();
+                engine.currentMode = 'attack';
+                showScene(3);
+                sound.playWhoosh();
+
+                const attackEl = document.getElementById('attack-text');
+                attackEl.classList.remove('fly-in');
+                void attackEl.offsetWidth;
+                attackEl.classList.add('fly-in');
+
+                setTimeout(() => {
+                    spawnHeartExplosion(window.innerWidth / 2, window.innerHeight / 2, 26);
+                    sound.playSparkle();
+                }, 1050);
+
+                setTimeout(() => {
+                    showScene(4);
+                }, 2350);
+            }
+
+            // SCENE 04 -> SCENE 05 ("รักนะ")
+            document.querySelectorAll('.btn-agree').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (isTransitioning) return;
+                    isTransitioning = true;
+
+                    sound.playClick();
+                    const rect = btn.getBoundingClientRect();
+                    spawnHeartExplosion(rect.left + rect.width / 2, rect.top + rect.height / 2, 32);
+
+                    setTimeout(() => {
+                        showScene(5);
+                        engine.currentMode = 'love';
+                        engine.buildAsciiHeart("รักนะ", "#ff5e9c", "#c77dff");
+                        sound.playPop();
+                        setTimeout(() => sound.playSparkle(), 350);
+                        isTransitioning = false;
+                    }, 550);
+                });
+            });
+        };
+    </script>
+</body>
+</html>
